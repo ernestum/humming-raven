@@ -9,10 +9,13 @@
 volatile int Encoder1 = 0;
 volatile int Encoder2 = 0;
 
+int test=0;
+
 HX711 scale;
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
 
 MotorMover mm{lcd, scale};
+
 
 
 void setup()
