@@ -1,0 +1,7 @@
+{
+    "name": "ggcom",
+    "version": "0.0.1",
+    "dependencies": {
+        "ggwave": ">=1.0.0"
+    }
+}
