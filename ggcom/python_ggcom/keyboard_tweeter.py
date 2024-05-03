@@ -1,6 +1,6 @@
 from pynput import keyboard
 
-from tweet_protocoll import Tweeter
+from ggcom import Tweeter
 
 t = Tweeter(1)
 
