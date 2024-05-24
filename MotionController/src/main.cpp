@@ -9,7 +9,9 @@
 volatile int Encoder1 = 0;
 volatile int Encoder2 = 0;
 
-int test=0;
+volatile float f;
+
+int test=20;
 
 HX711 scale;
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
@@ -38,6 +40,7 @@ void setup()
   // Play tetris melody with beeper:
   tone(BEEPER, 659, 250);
   delay(500);
+  /*
   tone(BEEPER, 659, 250);
   delay(500);
   tone(BEEPER, 659, 300);
@@ -57,12 +60,13 @@ void setup()
   tone(BEEPER, 330, 300);
   delay(600);
 
+*/
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
   lcd.display();
   lcd.noCursor();
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("MINIPRINTER SETUP");
+  lcd.print("MINIPRINTER ");
 
   pinMode(BEEPER, OUTPUT);
   digitalWrite(BEEPER, HIGH);
@@ -72,15 +76,32 @@ void setup()
   digitalWrite(Z_ENABLE_PIN, HIGH);
   digitalWrite(X_ENABLE_PIN, HIGH);
   mm.home_X();
-  mm.run_X();
-  mm.home_Y();
-  mm.home_Z();
+ // mm.run_X();
+  //mm.home_Y();
+ // mm.home_Z();
+
+//mm.move_Z_to_Neutral();
+//mm.pen_Down();
+//mm.move_Z_to_Neutral();
+//mm.pen_Up();
+
+mm.line(4000,0,2500,0);
 }
 
 void loop()
 {
-  Serial.println("Hello World!");
-  delay(1000);
+    lcd.setCursor(0, 0);
+  lcd.print("            ");
+    f = scale.get_units(1);
+  Serial.println(f);
+   lcd.setCursor(0, 1);
+  lcd.print("B:");
+  //lcd.print(Button);
+  lcd.print(" - L:");
+  lcd.print(f, 2);
+  lcd.print("     ");
+  //Serial.println("Hello World!");
+  delay(100);
 }
 
 /*
