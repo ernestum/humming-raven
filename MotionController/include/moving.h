@@ -107,6 +107,7 @@ struct MotorMover
 
   inline void home_Z()
   {
+    ZDIRvalue=LOW;
     lcd.setCursor(0, 2);
     lcd.print("Z homing");
     digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
@@ -125,7 +126,8 @@ struct MotorMover
 
     ZDIRvalue = !ZDIRvalue;
     digitalWrite(Z_DIR_PIN, ZDIRvalue);
-    for (int i = 0; i < 10; i++)
+
+    while (abs(scale.get_units(1)) > 200)
     {
       digitalWrite(Z_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
@@ -157,51 +159,6 @@ struct MotorMover
       lcd.print("PEN NEUTRAL");
       digitalWrite(Z_ENABLE_PIN, HIGH);
       MOTION_DONE = 1;
-    }
-
-    // detect correct direction
-    if (f > 100)
-    {
-      for (int i = 0; i < 150; i++)
-      {
-        digitalWrite(Z_STEP_PIN, HIGH);
-        delayMicroseconds(HOMINGSPEED);
-        digitalWrite(Z_STEP_PIN, LOW);
-        delayMicroseconds(HOMINGSPEED);
-      }
-      auto f2 = abs(scale.get_units(1));
-      lcd.setCursor(10, 1);
-      lcd.print("f2:");
-      lcd.print(f, 1);
-
-      if (f2 > f + 10)
-      {
-        ZDIRvalue = !ZDIRvalue;
-      }
-
-      // doing it twice to make sure
-
-      f = abs(scale.get_units(1));
-      lcd.setCursor(0, 1);
-      lcd.print("f:");
-      lcd.print(f, 1);
-
-      for (int i = 0; i < 150; i++)
-      {
-        digitalWrite(Z_STEP_PIN, HIGH);
-        delayMicroseconds(HOMINGSPEED);
-        digitalWrite(Z_STEP_PIN, LOW);
-        delayMicroseconds(HOMINGSPEED);
-      }
-      f2 = scale.get_units(1);
-      lcd.setCursor(10, 1);
-      lcd.print("f2:");
-      lcd.print(f, 1);
-
-      if (f2 > f + 10)
-      {
-        ZDIRvalue = !ZDIRvalue;
-      }
     }
 
     // move until load is off sensor

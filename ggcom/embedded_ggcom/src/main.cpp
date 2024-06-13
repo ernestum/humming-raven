@@ -37,6 +37,6 @@ void sendLine(float x1, float y1, float x2, float y2) {
 }
 
 void loop() {
-  sendLine(random(0, 100), random(0, 100), random(0, 100), random(0, 100));
+  sendLine(random(0, 50), random(0, 50), random(0, 50), random(0, 50));
   delay(1000);
 }

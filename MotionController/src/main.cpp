@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <HX711.h>
 #include <LiquidCrystal.h>
+#include <ArduinoJson.h>
 
 #include <pinout.h>
 #include <config.h>
@@ -9,23 +10,22 @@
 volatile int Encoder1 = 0;
 volatile int Encoder2 = 0;
 
+int Button=0;
+
 volatile float f;
 
-int test=20;
+int test = 20;
 
 HX711 scale;
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
 
 MotorMover mm{lcd, scale};
 
-
-
 void setup()
 {
   Serial.begin(9600);
   setup_pin_modes();
   // put your setup code here, to run once:
-  
 
   scale.begin(dataPin, clockPin);
 
@@ -75,32 +75,104 @@ void setup()
   digitalWrite(Y_ENABLE_PIN, HIGH);
   digitalWrite(Z_ENABLE_PIN, HIGH);
   digitalWrite(X_ENABLE_PIN, HIGH);
-  mm.home_X();
- // mm.run_X();
-  //mm.home_Y();
-  mm.home_Z();
 
- mm.move_Z_to_Neutral();
-//mm.pen_Down();
+  while (millis() < 10000)
+  {
+  
+  f = scale.get_units(1);
+  Serial.println(f);
+  Button = digitalRead(BTN_ENC);
+  Encoder1 = digitalRead(BTN_EN1);
+  Encoder2 = digitalRead(BTN_EN2);
+
+  Xlimit = digitalRead(X_MIN_PIN);
+  Ylimit = digitalRead(Y_MIN_PIN);
+  lcd.clear();
+  lcd.setCursor(0, 1);
+  lcd.print("B:");
+  lcd.print(Button);
+  lcd.print(" - L:");
+  lcd.print(f, 2);
+  lcd.print("     ");
+  lcd.setCursor(0, 2);
+  lcd.print(" - X1:");
+  lcd.print(Xlimit);
+  lcd.print(" - Y1:");
+  lcd.print(Ylimit);
+
+  lcd.setCursor(0, 3);
+  lcd.print("Check Load Cell");
+  delay(100);
+}
+
+lcd.clear();
+ 
+mm.home_X();
+// mm.run_X();
+// mm.home_Y();
+mm.home_Z();
+
 //mm.move_Z_to_Neutral();
-//mm.pen_Up();
+mm.pen_Down();
+delay(2000);
+// mm.move_Z_to_Neutral();
+mm.pen_Up();
+delay(2000);
+mm.line(400, 0, 250, 0);
+}
 
-mm.line(400,0,250,0);
+void receiveLine()
+{
+  if (Serial.available())
+  {
+    JsonDocument doc;
+    auto deserializationState = deserializeJson(doc, Serial);
+
+    if (deserializationState == DeserializationError::Ok)
+    {
+      if (doc["x1"].is<float>() and doc["y1"].is<float>() and doc["x2"].is<float>() and doc["y2"].is<float>())
+      {
+        auto x1 = round(doc["x1"].as<float>());
+        auto y1 = round(doc["y1"].as<float>());
+        auto x2 = round(doc["x2"].as<float>());
+        auto y2 = round(doc["y2"].as<float>());
+        
+
+        lcd.setCursor(0, 2);
+        lcd.print(x1);
+        lcd.print(" ");
+        lcd.print(y1);
+        lcd.print(" ");
+        lcd.print(x2);
+        lcd.print(" ");
+        lcd.print(y2);
+
+        mm.line(x1, y1, x2, y2);
+      }
+    }
+    else
+    {
+      while (Serial.available() > 0)
+      {
+        Serial.read();
+      }
+    }
+  }
 }
 
 void loop()
 {
-    lcd.setCursor(0, 0);
+  lcd.setCursor(0, 0);
   lcd.print("            ");
-    f = scale.get_units(1);
+  f = scale.get_units(1);
   Serial.println(f);
-   lcd.setCursor(0, 1);
+  lcd.setCursor(0, 1);
   lcd.print("B:");
-  //lcd.print(Button);
+  // lcd.print(Button);
   lcd.print(" - L:");
   lcd.print(f, 2);
   lcd.print("     ");
-  //Serial.println("Hello World!");
+  // Serial.println("Hello World!");
   delay(100);
 }
 

@@ -51,8 +51,8 @@
 #define TEMP_0_PIN 13 // ANALOG NUMBERING
 #define TEMP_1_PIN 14 // ANALOG NUMBERING
 
-#define dataPin 4
-#define clockPin 5
+#define dataPin 58
+#define clockPin 57
 
 inline void setup_pin_modes()
 {
