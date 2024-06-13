@@ -1,4 +1,89 @@
 
+eeee
+
+this
+
+
+
+
+COMMUNICATION
+
+
+-2 points, 
+
+-are we sending characters?
+
+-writing message takes 30s -
+
+Message format:
+
+<counter> | C | <character> | <x>         | <y>         | <size>
+<counter> | L | <x1>        | <y1>        | <x2>        | <y2>
+
+
+12345678 | <char> | <char> | <c1> | <c2> | <c3> | <size>
+<cntr >i | <c1>   | <c2>   | <c3> | <c4> | <c5> | <c6>
+
+
+Coordinates:
+0.1 mm resolution
+500x500 units
+implement my function as floats on my side
+
+I write function to write a line
+
+lift pen
+put down pen
+draw line
+lift pen
+
+
+
+
+
+
+C stands for character
+
+max message size is 100 bytes?
+
+
+MODE1:
+
+we are sending a line of text in multiple messages
+printer confirms when received and when written
+printer send counter back of message that is written 
+and which messages are missing
+printer leaves gaps for missing messages
+phone resends missing messagte
+printer fills in gaps
+
+
+1 message is 1 letter
+
+
+
+
+
+
+
+void draw_line(float x1, float y1, float x2, float y2) {
+    ...
+}
+
+void draw_line(Point p1, Point p2) {
+    
+}
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------
+
+NAMING IDEAS
 
 Use the E-prefix (just like with E-Mail) and append writing tool of our choice.
 E-Scribe

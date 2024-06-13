@@ -1,8 +1,8 @@
 #pragma once
 
-#define HOMINGSPEED 500
-#define MOVINGSPEED 400
-#define DRAWINGSPEED 400
+#define HOMINGSPEED 1000
+#define MOVINGSPEED 800
+#define DRAWINGSPEED 800
 
 #define LCD_HEIGHT 4
 #define LCD_WIDTH 20

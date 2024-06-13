@@ -9,104 +9,111 @@ bool Ylimit = false;
 bool ZDIRvalue = false;
 bool PENDOWNstate = false;
 
-int xpos=0;
-int ypos=0;
+int xpos = 0;
+int ypos = 0;
 
-int x_steps_per_unit=150;
-int y_steps_per_unit=20;
+int x_steps_per_unit = 2;
+int y_steps_per_unit = 20;
 
-struct MotorMover {
-  LiquidCrystal& lcd;
-  HX711& scale;
+struct MotorMover
+{
+  LiquidCrystal &lcd;
+  HX711 &scale;
 
 
+  inline void line(int x1, int y1, int x2, int y2)
+  {
 
+    // x_steps_per_unit
+    pen_Up();
 
-  inline void line(int x1,int y1,int x2,int y2) {
+    lcd.setCursor(0, 2);
 
-    //x_steps_per_unit
-pen_Up();
-
- lcd.setCursor(0, 2);
-
- int deltaX= x1-xpos;
-  lcd.setCursor(0, 0);
+    int deltaX = x1 - xpos;
+    lcd.setCursor(0, 0);
     lcd.print("deltaX:");
-     lcd.print(deltaX);
- //XDIR HIGH IS MOVING TO THE RIGHT
+    lcd.print(deltaX);
+    // XDIR HIGH IS MOVING TO THE RIGHT
 
-if (deltaX <0){digitalWrite(X_DIR_PIN, HIGH);  }
-else{ digitalWrite(X_DIR_PIN, LOW);}
+    if (deltaX < 0)
+    {
+      digitalWrite(X_DIR_PIN, HIGH);
+    }
+    else
+    {
+      digitalWrite(X_DIR_PIN, LOW);
+    }
 
-    
     digitalWrite(X_ENABLE_PIN, LOW);
 
     lcd.setCursor(0, 2);
     lcd.print("MOVE TO X1      ");
     lcd.setCursor(0, 4);
     lcd.print("X:");
-     lcd.print(xpos);
-    for (long i=0; i<(5*abs(deltaX)); i++) {
+    lcd.print(xpos);
+    for (long i = 0; i < (10 * abs(deltaX)); i++)
+    {
       digitalWrite(X_STEP_PIN, HIGH);
       delayMicroseconds(DRAWINGSPEED);
       digitalWrite(X_STEP_PIN, LOW);
       delayMicroseconds(DRAWINGSPEED);
     }
-    xpos=x1;
+    xpos = x1;
 
-     lcd.setCursor(0, 4);
-       lcd.print("X:");
-     lcd.print(xpos);
+    lcd.setCursor(0, 4);
+    lcd.print("X:");
+    lcd.print(xpos);
 
+    pen_Down();
 
-   pen_Down();
-
-
-  deltaX= x2-xpos;
-  lcd.setCursor(0, 0);
+    deltaX = x2 - xpos;
+    lcd.setCursor(0, 0);
     lcd.print("deltaX:");
-     lcd.print(deltaX);
- //XDIR HIGH IS MOVING TO THE RIGHT
+    lcd.print(deltaX);
+    // XDIR HIGH IS MOVING TO THE RIGHT
 
-if (deltaX <0){digitalWrite(X_DIR_PIN, HIGH);  }
-else{ digitalWrite(X_DIR_PIN, LOW);}
+    if (deltaX < 0)
+    {
+      digitalWrite(X_DIR_PIN, HIGH);
+    }
+    else
+    {
+      digitalWrite(X_DIR_PIN, LOW);
+    }
 
-    
     digitalWrite(X_ENABLE_PIN, LOW);
 
     lcd.setCursor(0, 2);
     lcd.print("MOVE TO X2      ");
     lcd.setCursor(0, 4);
     lcd.print("X:");
-     lcd.print(xpos);
-    for (long i=0; i<(5*abs(deltaX)); i++) {
+    lcd.print(xpos);
+    for (long i = 0; i < (10 * abs(deltaX)); i++)
+    {
       digitalWrite(X_STEP_PIN, HIGH);
       delayMicroseconds(DRAWINGSPEED);
       digitalWrite(X_STEP_PIN, LOW);
       delayMicroseconds(DRAWINGSPEED);
     }
-    xpos=x2;
+    xpos = x2;
 
-     lcd.setCursor(0, 4);
-       lcd.print("X:");
-     lcd.print(xpos);
+    lcd.setCursor(0, 4);
+    lcd.print("X:");
+    lcd.print(xpos);
 
-
-pen_Up();
- digitalWrite(X_ENABLE_PIN, HIGH);
-
+    pen_Up();
+    digitalWrite(X_ENABLE_PIN, HIGH);
   }
 
-
-
-
-  inline void home_Z() {
- lcd.setCursor(0, 2);
+  inline void home_Z()
+  {
+    lcd.setCursor(0, 2);
     lcd.print("Z homing");
-    digitalWrite(Z_DIR_PIN, ZDIRvalue);  // high is counterclockwise
+    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
     digitalWrite(Z_ENABLE_PIN, LOW);
     Serial.println("home Z");
-    while (abs(scale.get_units(1)) < 400) {
+    while (abs(scale.get_units(1)) < 400)
+    {
       digitalWrite(Z_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
       digitalWrite(Z_STEP_PIN, LOW);
@@ -118,121 +125,127 @@ pen_Up();
 
     ZDIRvalue = !ZDIRvalue;
     digitalWrite(Z_DIR_PIN, ZDIRvalue);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++)
+    {
       digitalWrite(Z_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
       digitalWrite(Z_STEP_PIN, LOW);
       delayMicroseconds(HOMINGSPEED);
     }
     lcd.setCursor(0, 2);
-    lcd.print("Z HOMED        ");         
+    lcd.print("Z HOMED        ");
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
-
-
-
-  inline void move_Z_to_Neutral() {
-ZDIRvalue = true;
-int MOTION_DONE=0;
-    digitalWrite(Z_DIR_PIN, ZDIRvalue);  // high is counterclockwise
+  inline void move_Z_to_Neutral()
+  {
+    ZDIRvalue = true;
+    int MOTION_DONE = 0;
+    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
     digitalWrite(Z_ENABLE_PIN, LOW);
     lcd.setCursor(0, 2);
     lcd.print("MOVE TO NEUTRAL");
 
-auto f = abs(scale.get_units(1));
+    auto f = abs(scale.get_units(1));
     lcd.setCursor(0, 1);
     lcd.print("f:");
-      lcd.print(f,1);
+    lcd.print(f, 1);
 
-if (abs(scale.get_units(1)) < 50) {
-    lcd.setCursor(0, 2);
-    lcd.print("PEN NEUTRAL");
-    digitalWrite(Z_ENABLE_PIN, HIGH);
-MOTION_DONE=1;
-}
+    if (abs(scale.get_units(1)) < 50)
+    {
+      lcd.setCursor(0, 2);
+      lcd.print("PEN NEUTRAL");
+      digitalWrite(Z_ENABLE_PIN, HIGH);
+      MOTION_DONE = 1;
+    }
 
+    // detect correct direction
+    if (f > 100)
+    {
+      for (int i = 0; i < 150; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED);
+      }
+      auto f2 = abs(scale.get_units(1));
+      lcd.setCursor(10, 1);
+      lcd.print("f2:");
+      lcd.print(f, 1);
 
-//detect correct direction
-if ( f > 100){
-    for (int i = 0; i <150; i++) {
+      if (f2 > f + 10)
+      {
+        ZDIRvalue = !ZDIRvalue;
+      }
+
+      // doing it twice to make sure
+
+      f = abs(scale.get_units(1));
+      lcd.setCursor(0, 1);
+      lcd.print("f:");
+      lcd.print(f, 1);
+
+      for (int i = 0; i < 150; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED);
+      }
+      f2 = scale.get_units(1);
+      lcd.setCursor(10, 1);
+      lcd.print("f2:");
+      lcd.print(f, 1);
+
+      if (f2 > f + 10)
+      {
+        ZDIRvalue = !ZDIRvalue;
+      }
+    }
+
+    // move until load is off sensor
+    while (abs(scale.get_units(1)) > 100)
+    {
       digitalWrite(Z_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
       digitalWrite(Z_STEP_PIN, LOW);
       delayMicroseconds(HOMINGSPEED);
     }
-    auto f2 = abs(scale.get_units(1));
-       lcd.setCursor(10, 1);
-    lcd.print("f2:");
-      lcd.print(f,1);
 
-     if (f2 > f+10){
-  ZDIRvalue = !ZDIRvalue;
-
-     }  
-
-     //doing it twice to make sure
-
-     f = abs(scale.get_units(1));
-    lcd.setCursor(0, 1);
-    lcd.print("f:");
-      lcd.print(f,1);
-
-         for (int i = 0; i <150; i++) {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
+    // move a bit more
+    if (MOTION_DONE == 0)
+    {
+      for (int i = 0; i < 100; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED);
+      }
     }
-     f2 = scale.get_units(1);
-       lcd.setCursor(10, 1);
-    lcd.print("f2:");
-      lcd.print(f,1);
-
-     if (f2 > f+10){
-  ZDIRvalue = !ZDIRvalue;
-
-     }  
-}
-
-//move until load is off sensor
-    while (abs(scale.get_units(1)) > 100) {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-    
-  // move a bit more  
-  if(MOTION_DONE==0){
-      for (int i = 0; i <100; i++) {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-  }
-    
 
     lcd.setCursor(0, 2);
     lcd.print("PEN NEUTRAL           ");
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
-
-  inline void pen_Down() {
-ZDIRvalue = true;
-    digitalWrite(Z_DIR_PIN, ZDIRvalue);  // high is counterclockwise
+  inline void pen_Down()
+  {
+    ZDIRvalue = true;
+    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
     digitalWrite(Z_ENABLE_PIN, LOW);
 
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 40; i++)
+    {
       digitalWrite(Z_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
       digitalWrite(Z_STEP_PIN, LOW);
       delayMicroseconds(HOMINGSPEED);
     }
 
-    while (abs(scale.get_units(1)) < 150) {
+    while (abs(scale.get_units(1)) < 150)
+    {
       digitalWrite(Z_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
       digitalWrite(Z_STEP_PIN, LOW);
@@ -244,72 +257,76 @@ ZDIRvalue = true;
 
     lcd.setCursor(0, 2);
     lcd.print("PEN DOWN     ");
-    PENDOWNstate=true;
+    PENDOWNstate = true;
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
+  inline void pen_Up()
+  {
 
+    if (PENDOWNstate == true)
+    {
 
-  inline void pen_Up() {
+      ZDIRvalue = false;
+      digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
+      digitalWrite(Z_ENABLE_PIN, LOW);
 
-if(PENDOWNstate==true){
-
-ZDIRvalue = false;
-    digitalWrite(Z_DIR_PIN, ZDIRvalue);  // high is counterclockwise
-    digitalWrite(Z_ENABLE_PIN, LOW);
-
-    for (int i = 0; i < 300; i++) {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(MOVINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-         delayMicroseconds(MOVINGSPEED);
+      for (int i = 0; i < 300; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(MOVINGSPEED);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(MOVINGSPEED);
+      }
     }
 
-  }
-
-  lcd.setCursor(0, 2);
+    lcd.setCursor(0, 2);
     lcd.print("PEN UP         ");
-       PENDOWNstate=false;
+    PENDOWNstate = false;
 
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
-  inline void home_X() {
+  inline void home_X()
+  {
 
     digitalWrite(X_DIR_PIN, LOW);
     digitalWrite(X_ENABLE_PIN, LOW);
     Serial.println("Home X");
     lcd.setCursor(0, 2);
     lcd.print("HOME X      ");
-    while (digitalRead(X_MIN_PIN) == LOW) {
+    while (digitalRead(X_MIN_PIN) == LOW)
+    {
       digitalWrite(X_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
       digitalWrite(X_STEP_PIN, LOW);
       delayMicroseconds(HOMINGSPEED);
     }
 
-
     digitalWrite(X_DIR_PIN, HIGH);
-    for (int i = 0; i < 350; i++) {
+    for (int i = 0; i < 350; i++)
+    {
       digitalWrite(X_STEP_PIN, HIGH);
-    delayMicroseconds(150);
+      delayMicroseconds(150);
       digitalWrite(X_STEP_PIN, LOW);
-    delayMicroseconds(150);
+      delayMicroseconds(150);
     }
     lcd.setCursor(0, 2);
     lcd.print("X HOMED       ");
     digitalWrite(X_ENABLE_PIN, HIGH);
-    xpos=5000;
+    xpos = 500;
   }
 
-  inline void run_X() {
+  inline void run_X()
+  {
 
     digitalWrite(X_DIR_PIN, HIGH);
     digitalWrite(X_ENABLE_PIN, LOW);
     Serial.println("run X     ");
     lcd.setCursor(0, 3);
     lcd.print("run X");
-    for (int i = 0; i < 5000; i++) {
+    for (int i = 0; i < 5000; i++)
+    {
       digitalWrite(X_STEP_PIN, HIGH);
       delayMicroseconds(300);
       digitalWrite(X_STEP_PIN, LOW);
@@ -318,15 +335,16 @@ ZDIRvalue = false;
     digitalWrite(X_ENABLE_PIN, HIGH);
   }
 
-  
-  inline void home_Y() {
+  inline void home_Y()
+  {
 
     digitalWrite(Y_DIR_PIN, LOW);
     digitalWrite(Y_ENABLE_PIN, LOW);
     Serial.println("Home Y");
     lcd.setCursor(0, 3);
     lcd.print("home Y      ");
-    while (digitalRead(Y_MIN_PIN) == LOW) {
+    while (digitalRead(Y_MIN_PIN) == LOW)
+    {
 
       digitalWrite(Y_STEP_PIN, HIGH);
       delayMicroseconds(HOMINGSPEED);
@@ -334,9 +352,9 @@ ZDIRvalue = false;
       delayMicroseconds(HOMINGSPEED);
     }
 
-
     digitalWrite(Y_DIR_PIN, HIGH);
-    for (int i = 0; i < 15000; i++) {
+    for (int i = 0; i < 15000; i++)
+    {
       digitalWrite(Y_STEP_PIN, HIGH);
       delayMicroseconds(100);
       digitalWrite(Y_STEP_PIN, LOW);
@@ -346,6 +364,4 @@ ZDIRvalue = false;
     lcd.print("Yhoming done");
     digitalWrite(Y_ENABLE_PIN, HIGH);
   }
-
-
 };

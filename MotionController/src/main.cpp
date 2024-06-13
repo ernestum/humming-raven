@@ -78,14 +78,14 @@ void setup()
   mm.home_X();
  // mm.run_X();
   //mm.home_Y();
- // mm.home_Z();
+  mm.home_Z();
 
-//mm.move_Z_to_Neutral();
+ mm.move_Z_to_Neutral();
 //mm.pen_Down();
 //mm.move_Z_to_Neutral();
 //mm.pen_Up();
 
-mm.line(4000,0,2500,0);
+mm.line(400,0,250,0);
 }
 
 void loop()
