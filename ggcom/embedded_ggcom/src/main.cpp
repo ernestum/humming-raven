@@ -1,6 +1,7 @@
 #include<Arduino.h>
 #include <PDM.h>
 #include<ggcom.h>
+#include<ArduinoJson.h>
 
 GGComRX<> ggcom(3);
 
@@ -13,6 +14,7 @@ void onPDMdata() {
 
 void setup() {
   Serial.begin(57600);
+  Serial1.begin(9600);
   while (!Serial);
 
   PDM.onReceive(onPDMdata);
@@ -22,7 +24,19 @@ void setup() {
       while (1);
   }
 }
+void sendLine(float x1, float y1, float x2, float y2) {
+    // pack line into json
+    JsonDocument doc;
+    doc["x1"] = x1;
+    doc["y1"] = y1;
+    doc["x2"] = x2;
+    doc["y2"] = y2;
+    
+    // serialize to Serial1
+    serializeJson(doc, Serial1);
+}
 
 void loop() {
-  ggcom.loop();
+  sendLine(random(0, 100), random(0, 100), random(0, 100), random(0, 100));
+  delay(1000);
 }
