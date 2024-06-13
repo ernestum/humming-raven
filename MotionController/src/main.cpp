@@ -76,7 +76,7 @@ void setup()
   digitalWrite(Z_ENABLE_PIN, HIGH);
   digitalWrite(X_ENABLE_PIN, HIGH);
 
-  while (millis() < 10000)
+  while (millis() < 10000 && digitalRead(BTN_ENC)==1)
   {
   
   f = scale.get_units(1);
@@ -101,23 +101,26 @@ void setup()
   lcd.print(Ylimit);
 
   lcd.setCursor(0, 3);
-  lcd.print("Check Load Cell");
+  lcd.print("B to continue");
   delay(100);
 }
 
 lcd.clear();
- 
+ mm.home_Z();
+ mm.pen_Up();
 mm.home_X();
 // mm.run_X();
-// mm.home_Y();
-mm.home_Z();
+mm.home_Y();
+
+delay(500);
+
 
 //mm.move_Z_to_Neutral();
 mm.pen_Down();
-delay(2000);
+delay(200);
 // mm.move_Z_to_Neutral();
-mm.pen_Up();
-delay(2000);
+;
+delay(200);
 mm.line(400, 0, 250, 0);
 }
 

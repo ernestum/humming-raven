@@ -12,6 +12,8 @@ bool PENDOWNstate = false;
 int xpos = 0;
 int ypos = 0;
 
+int z_total_steps = 0;
+
 int x_steps_per_unit = 2;
 int y_steps_per_unit = 20;
 
@@ -19,7 +21,6 @@ struct MotorMover
 {
   LiquidCrystal &lcd;
   HX711 &scale;
-
 
   inline void line(int x1, int y1, int x2, int y2)
   {
@@ -80,7 +81,7 @@ struct MotorMover
     {
       digitalWrite(X_DIR_PIN, LOW);
     }
-
+    // test
     digitalWrite(X_ENABLE_PIN, LOW);
 
     lcd.setCursor(0, 2);
@@ -103,40 +104,6 @@ struct MotorMover
 
     pen_Up();
     digitalWrite(X_ENABLE_PIN, HIGH);
-  }
-
-  inline void home_Z()
-  {
-    ZDIRvalue=LOW;
-    lcd.setCursor(0, 2);
-    lcd.print("Z homing");
-    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
-    digitalWrite(Z_ENABLE_PIN, LOW);
-    Serial.println("home Z");
-    while (abs(scale.get_units(1)) < 400)
-    {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-    auto f = scale.get_units(1);
-    Serial.print(abs(f));
-    Serial.print(" : ");
-
-    ZDIRvalue = !ZDIRvalue;
-    digitalWrite(Z_DIR_PIN, ZDIRvalue);
-
-    while (abs(scale.get_units(1)) > 200)
-    {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-    lcd.setCursor(0, 2);
-    lcd.print("Z HOMED        ");
-    digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
   inline void move_Z_to_Neutral()
@@ -187,37 +154,32 @@ struct MotorMover
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
+
   inline void pen_Down()
   {
-    ZDIRvalue = true;
-    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
-    digitalWrite(Z_ENABLE_PIN, LOW);
 
-    for (int i = 0; i < 40; i++)
+    if (PENDOWNstate == false)
     {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
+
+      ZDIRvalue = true;
+      digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
+      digitalWrite(Z_ENABLE_PIN, LOW);
+
+      for (int i = 0; i < STEPS_TO_RAISE_PEN; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(MOVINGSPEED);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(MOVINGSPEED);
+      }
     }
 
-    while (abs(scale.get_units(1)) < 150)
-    {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-    auto f = scale.get_units(1);
-    Serial.print(abs(f));
-    Serial.print(" : ");
+    lcd.setCursor(0, 0);
+    lcd.print("PEN UP         ");
+    PENDOWNstate = false;
 
-    lcd.setCursor(0, 2);
-    lcd.print("PEN DOWN     ");
-    PENDOWNstate = true;
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
-
   inline void pen_Up()
   {
 
@@ -228,7 +190,7 @@ struct MotorMover
       digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
       digitalWrite(Z_ENABLE_PIN, LOW);
 
-      for (int i = 0; i < 300; i++)
+      for (int i = 0; i < STEPS_TO_RAISE_PEN; i++)
       {
         digitalWrite(Z_STEP_PIN, HIGH);
         delayMicroseconds(MOVINGSPEED);
@@ -237,10 +199,121 @@ struct MotorMover
       }
     }
 
-    lcd.setCursor(0, 2);
+    lcd.setCursor(0, 0);
     lcd.print("PEN UP         ");
     PENDOWNstate = false;
 
+    digitalWrite(Z_ENABLE_PIN, HIGH);
+  }
+
+  inline void home_Y()
+  {
+
+    digitalWrite(Y_DIR_PIN, LOW);
+    digitalWrite(Y_ENABLE_PIN, LOW);
+    Serial.println("Home Y");
+    lcd.setCursor(0, 2);
+    lcd.print("Y HOME");
+    while (digitalRead(Y_MIN_PIN) == LOW)
+    {
+
+      digitalWrite(Y_STEP_PIN, HIGH);
+      delayMicroseconds(HOMINGSPEED);
+      digitalWrite(Y_STEP_PIN, LOW);
+      delayMicroseconds(HOMINGSPEED);
+    }
+
+    digitalWrite(Y_DIR_PIN, HIGH);
+    for (int i = 0; i < 2000; i++)
+    {
+      digitalWrite(Y_STEP_PIN, HIGH);
+      delayMicroseconds(100);
+      digitalWrite(Y_STEP_PIN, LOW);
+      delayMicroseconds(100);
+    }
+    lcd.setCursor(0, 2);
+    lcd.print("Y HOMED  ");
+    digitalWrite(Y_ENABLE_PIN, HIGH);
+  }
+
+  inline void home_Z()
+  {
+
+    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
+    digitalWrite(Z_ENABLE_PIN, LOW);
+    Serial.println("Z");
+    lcd.setCursor(0, 3);
+    lcd.print("Z HOME  LC: ");
+    lcd.setCursor(12, 3);
+    lcd.print(abs(scale.get_units(1)), 2);
+
+    while (abs(scale.get_units(1)) < LOADCELL_TRESHOLD)
+    {
+      lcd.setCursor(12, 3);
+      lcd.print(abs(scale.get_units(1)), 2);
+      // homing z is slow because reading the loqd cell each step takes time
+      for (int i = 0; i < 10; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED_Z);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED_Z);
+      }
+    }
+    auto f = scale.get_units(1);
+    Serial.print(abs(f));
+    Serial.print(" : ");
+
+    ZDIRvalue = !ZDIRvalue;
+    digitalWrite(Z_DIR_PIN, ZDIRvalue);
+    while (abs(scale.get_units(1)) > 5)
+    {
+      lcd.setCursor(12, 3);
+      lcd.print(abs(scale.get_units(1)), 2);
+      z_total_steps += 30;
+      for (int i = 0; i < 30; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED_Z);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED_Z);
+      }
+    }
+
+    lcd.setCursor(12, 3);
+    lcd.print(abs(scale.get_units(1)), 2);
+    lcd.setCursor(0, 3);
+    lcd.print("Z HOMED");
+
+    while (abs(scale.get_units(1)) < LOADCELL_PEN_PRESSURE) // detecting distance to PEN DOWN position
+    {
+      lcd.setCursor(12, 3);
+      lcd.print(abs(scale.get_units(1)), 2);
+      z_total_steps += 5;
+      for (int i = 0; i < 5; i++)
+      {
+        digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED_Z);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED_Z);
+      }
+    }
+    lcd.setCursor(0, 0);
+    lcd.print("Z steps:");
+    lcd.print(z_total_steps);
+
+    delay(3000);
+    ZDIRvalue = false;
+    /*
+    for (int i = 0; i < 70; i++)
+    {
+      digitalWrite(Z_STEP_PIN, HIGH);
+      delayMicroseconds(HOMINGSPEED);
+      digitalWrite(Z_STEP_PIN, LOW);
+      delayMicroseconds(HOMINGSPEED);
+    }*/
+
+   PENDOWNstate = true;
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
@@ -250,8 +323,9 @@ struct MotorMover
     digitalWrite(X_DIR_PIN, LOW);
     digitalWrite(X_ENABLE_PIN, LOW);
     Serial.println("Home X");
-    lcd.setCursor(0, 2);
-    lcd.print("HOME X      ");
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("home X");
     while (digitalRead(X_MIN_PIN) == LOW)
     {
       digitalWrite(X_STEP_PIN, HIGH);
@@ -261,17 +335,16 @@ struct MotorMover
     }
 
     digitalWrite(X_DIR_PIN, HIGH);
-    for (int i = 0; i < 350; i++)
+    for (int i = 0; i < 2000; i++)
     {
       digitalWrite(X_STEP_PIN, HIGH);
       delayMicroseconds(150);
       digitalWrite(X_STEP_PIN, LOW);
       delayMicroseconds(150);
     }
-    lcd.setCursor(0, 2);
-    lcd.print("X HOMED       ");
+    lcd.setCursor(0, 1);
+    lcd.print("X HOMED");
     digitalWrite(X_ENABLE_PIN, HIGH);
-    xpos = 500;
   }
 
   inline void run_X()
@@ -290,35 +363,5 @@ struct MotorMover
       delayMicroseconds(300);
     }
     digitalWrite(X_ENABLE_PIN, HIGH);
-  }
-
-  inline void home_Y()
-  {
-
-    digitalWrite(Y_DIR_PIN, LOW);
-    digitalWrite(Y_ENABLE_PIN, LOW);
-    Serial.println("Home Y");
-    lcd.setCursor(0, 3);
-    lcd.print("home Y      ");
-    while (digitalRead(Y_MIN_PIN) == LOW)
-    {
-
-      digitalWrite(Y_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Y_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-
-    digitalWrite(Y_DIR_PIN, HIGH);
-    for (int i = 0; i < 15000; i++)
-    {
-      digitalWrite(Y_STEP_PIN, HIGH);
-      delayMicroseconds(100);
-      digitalWrite(Y_STEP_PIN, LOW);
-      delayMicroseconds(100);
-    }
-    lcd.setCursor(0, 3);
-    lcd.print("Yhoming done");
-    digitalWrite(Y_ENABLE_PIN, HIGH);
   }
 };
