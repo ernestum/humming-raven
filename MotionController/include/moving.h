@@ -11,11 +11,13 @@ bool PENDOWNstate = false;
 
 int xpos = 0;
 int ypos = 0;
+int Xpos_as_steps = 0; // absolute position as steps
+int Ypos_as_steps = 0;
 
 int z_total_steps = 0;
 
-int x_steps_per_unit = 2;
-int y_steps_per_unit = 20;
+// int x_steps_per_unit = 2; //deprecated
+// int y_steps_per_unit = 20;
 
 struct MotorMover
 {
@@ -154,7 +156,6 @@ struct MotorMover
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
-
   inline void pen_Down()
   {
 
@@ -222,6 +223,7 @@ struct MotorMover
       digitalWrite(Y_STEP_PIN, LOW);
       delayMicroseconds(HOMINGSPEED);
     }
+    Ypos_as_steps = YMAX * STEPSPERUNIT_Y;
 
     digitalWrite(Y_DIR_PIN, HIGH);
     for (int i = 0; i < 2000; i++)
@@ -230,6 +232,7 @@ struct MotorMover
       delayMicroseconds(100);
       digitalWrite(Y_STEP_PIN, LOW);
       delayMicroseconds(100);
+      Ypos_as_steps = Ypos_as_steps - 1;
     }
     lcd.setCursor(0, 2);
     lcd.print("Y HOMED  ");
@@ -313,7 +316,7 @@ struct MotorMover
       delayMicroseconds(HOMINGSPEED);
     }*/
 
-   PENDOWNstate = true;
+    PENDOWNstate = true;
     digitalWrite(Z_ENABLE_PIN, HIGH);
   }
 
@@ -334,6 +337,8 @@ struct MotorMover
       delayMicroseconds(HOMINGSPEED);
     }
 
+    Xpos_as_steps = XMAX * STEPSPERUNIT_X;
+
     digitalWrite(X_DIR_PIN, HIGH);
     for (int i = 0; i < 2000; i++)
     {
@@ -341,6 +346,8 @@ struct MotorMover
       delayMicroseconds(150);
       digitalWrite(X_STEP_PIN, LOW);
       delayMicroseconds(150);
+
+      Xpos_as_steps = Xpos_as_steps - 1;
     }
     lcd.setCursor(0, 1);
     lcd.print("X HOMED");
