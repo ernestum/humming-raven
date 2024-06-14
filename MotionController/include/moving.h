@@ -184,6 +184,7 @@ struct MotorMover
       PENDOWNstate = true;
       digitalWrite(Z_ENABLE_PIN, HIGH);
     }
+  }
     inline void pen_Up()
     {
 
@@ -383,7 +384,7 @@ struct MotorMover
       digitalWrite(X_ENABLE_PIN, HIGH);
 
     printCoordinates();
-    
+
     }
 
     inline void move_Y(int dist, boolean dir)
@@ -419,28 +420,29 @@ struct MotorMover
       moveToPoint(x2, y2);
       pen_Up();
     }
+
     inline void moveToPoint(int x1, int y1)
     {
       int dist_X = x1 * STEPSPERUNIT_X - Xpos_as_steps;
 
       if (dist_X > 0)
       {
-        move_X(dist_X, false);
+        move_X(abs(dist_X), false);
       }
       if (dist_X < 0)
       {
-        move_X(dist_X, true);
+        move_X(abs(dist_X), true);
       }
 
       int dist_Y = y1 * STEPSPERUNIT_Y - Ypos_as_steps;
 
       if (dist_Y > 0)
       {
-        move_Y(dist_Y, false);
+        move_Y(abs(dist_Y), false);
       }
       if (dist_Y < 0)
       {
-        move_Y(dist_Y, true);
+        move_Y(abs(dist_Y), true);
       }
       
     }
@@ -462,6 +464,8 @@ struct MotorMover
       }
       digitalWrite(X_ENABLE_PIN, HIGH);
     }
+
+
     inline void printCoordinates()
     {
       lcd.setCursor(10, 0);

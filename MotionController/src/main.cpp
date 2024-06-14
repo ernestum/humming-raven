@@ -10,7 +10,7 @@
 volatile int Encoder1 = 0;
 volatile int Encoder2 = 0;
 
-int Button=0;
+int Button = 0;
 
 volatile float f;
 
@@ -76,60 +76,80 @@ void setup()
   digitalWrite(Z_ENABLE_PIN, HIGH);
   digitalWrite(X_ENABLE_PIN, HIGH);
 
-  while (millis() < 10000 && digitalRead(BTN_ENC)==1)
+  while (millis() < 10000 && digitalRead(BTN_ENC) == 1)
   {
-  
-  f = scale.get_units(1);
-  Serial.println(f);
-  Button = digitalRead(BTN_ENC);
-  Encoder1 = digitalRead(BTN_EN1);
-  Encoder2 = digitalRead(BTN_EN2);
 
-  Xlimit = digitalRead(X_MIN_PIN);
-  Ylimit = digitalRead(Y_MIN_PIN);
+    f = scale.get_units(1);
+    Serial.println(f);
+    Button = digitalRead(BTN_ENC);
+    Encoder1 = digitalRead(BTN_EN1);
+    Encoder2 = digitalRead(BTN_EN2);
+
+    Xlimit = digitalRead(X_MIN_PIN);
+    Ylimit = digitalRead(Y_MIN_PIN);
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("B:");
+    lcd.print(Button);
+    lcd.print(" - L:");
+    lcd.print(f, 2);
+    lcd.print("     ");
+    lcd.setCursor(0, 2);
+    lcd.print(" - X1:");
+    lcd.print(Xlimit);
+    lcd.print(" - Y1:");
+    lcd.print(Ylimit);
+
+    lcd.setCursor(0, 3);
+    lcd.print("B to continue");
+    delay(100);
+  }
+
   lcd.clear();
-  lcd.setCursor(0, 1);
-  lcd.print("B:");
-  lcd.print(Button);
-  lcd.print(" - L:");
-  lcd.print(f, 2);
-  lcd.print("     ");
-  lcd.setCursor(0, 2);
-  lcd.print(" - X1:");
-  lcd.print(Xlimit);
-  lcd.print(" - Y1:");
-  lcd.print(Ylimit);
+  //mm.home_Z();
+ // mm.pen_Up();
+  // mm.home_X();
+  // mm.run_X();
+  // mm.home_Y();
 
-  lcd.setCursor(0, 3);
-  lcd.print("B to continue");
-  delay(100);
-}
+  delay(500);
 
-lcd.clear();
- mm.home_Z();
- mm.pen_Up();
-mm.home_X();
-// mm.run_X();
-mm.home_Y();
+  // mm.move_Z_to_Neutral();
+  // mm.pen_Down();
+  delay(200);
+  delay(200);
+  /*
+ mm.drawStraightLine(20, 20, 30, 30);
+ mm.printCoordinates();
+ delay(2000);
+ mm.moveToPoint (5,5);
+ mm.printCoordinates();
+ delay(2000);
+  mm.moveToPoint (40,5);
+ mm.printCoordinates();
+ delay(2000);
+   mm.moveToPoint (40,40);
+ mm.printCoordinates();
+ delay(2000);
+  mm.moveToPoint (0,0);
+ mm.printCoordinates();
+ delay(2000);
 
-delay(500);
-
-
-//mm.move_Z_to_Neutral();
-mm.pen_Down();
-delay(200);
-// mm.move_Z_to_Neutral();
-;
-delay(200);
-mm.line(400, 0, 250, 0);
-}
+ delay(2000);*/
+    mm.moveToPoint (10,10);
+ mm.printCoordinates();
+ delay(2000);
+} 
 
 void receiveLine()
 {
   if (Serial.available())
   {
+    lcd.setCursor(0, 0);
+
     JsonDocument doc;
     auto deserializationState = deserializeJson(doc, Serial);
+
 
     if (deserializationState == DeserializationError::Ok)
     {
@@ -139,7 +159,6 @@ void receiveLine()
         auto y1 = round(doc["y1"].as<float>());
         auto x2 = round(doc["x2"].as<float>());
         auto y2 = round(doc["y2"].as<float>());
-        
 
         lcd.setCursor(0, 2);
         lcd.print(x1);
@@ -150,7 +169,7 @@ void receiveLine()
         lcd.print(" ");
         lcd.print(y2);
 
-        mm.line(x1, y1, x2, y2);
+        mm.drawStraightLine(x1, y1, x2, y2);
       }
     }
     else
@@ -165,6 +184,24 @@ void receiveLine()
 
 void loop()
 {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+   lcd.print("LINE?");
+
+  /*if(Serial.available()) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("LINE:");
+    lcd.setCursor(0, 1);
+    while(Serial.available()) {
+      lcd.print(Serial.read());
+    }
+  }*/
+  receiveLine();   
+  mm.printCoordinates();
+delay(150);
+
+  /*
   lcd.setCursor(0, 0);
   lcd.print("            ");
   f = scale.get_units(1);
@@ -177,6 +214,7 @@ void loop()
   lcd.print("     ");
   // Serial.println("Hello World!");
   delay(100);
+  */
 }
 
 /*

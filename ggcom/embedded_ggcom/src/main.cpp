@@ -13,9 +13,10 @@ void onPDMdata() {
 }
 
 void setup() {
-  Serial.begin(57600);
+  Serial.begin(9600);
   Serial1.begin(9600);
-  while (!Serial);
+  pinMode(13,OUTPUT);
+
 
   PDM.onReceive(onPDMdata);
 
@@ -34,9 +35,13 @@ void sendLine(float x1, float y1, float x2, float y2) {
     
     // serialize to Serial1
     serializeJson(doc, Serial1);
+     serializeJson(doc, Serial);
+     digitalWrite(13,HIGH);
 }
 
 void loop() {
   sendLine(random(0, 50), random(0, 50), random(0, 50), random(0, 50));
-  delay(1000);
+  delay(500);
+  digitalWrite(13,LOW);
+  delay(500);
 }
