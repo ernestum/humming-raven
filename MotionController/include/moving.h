@@ -112,7 +112,8 @@ struct MotorMover
     digitalWrite(X_ENABLE_PIN, HIGH);
   }
 
-  inline void move_Z_to_Neutral()
+  inline void
+  move_Z_to_Neutral()
   {
     ZDIRvalue = true;
     int MOTION_DONE = 0;
@@ -177,251 +178,297 @@ struct MotorMover
         digitalWrite(Z_STEP_PIN, LOW);
         delayMicroseconds(MOVINGSPEED);
       }
+
+      lcd.setCursor(0, 0);
+      lcd.print("PEN DOWN ");
+      PENDOWNstate = true;
+      digitalWrite(Z_ENABLE_PIN, HIGH);
     }
-
-    lcd.setCursor(0, 0);
-    lcd.print("PEN UP         ");
-    PENDOWNstate = false;
-
-    digitalWrite(Z_ENABLE_PIN, HIGH);
-  }
-  inline void pen_Up()
-  {
-
-    if (PENDOWNstate == true)
+    inline void pen_Up()
     {
 
-      ZDIRvalue = false;
+      if (PENDOWNstate == true)
+      {
+
+        ZDIRvalue = false;
+        digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
+        digitalWrite(Z_ENABLE_PIN, LOW);
+
+        for (int i = 0; i < STEPS_TO_RAISE_PEN; i++)
+        {
+          digitalWrite(Z_STEP_PIN, HIGH);
+          delayMicroseconds(MOVINGSPEED);
+          digitalWrite(Z_STEP_PIN, LOW);
+          delayMicroseconds(MOVINGSPEED);
+        }
+      }
+
+      lcd.setCursor(0, 0);
+      lcd.print("PEN UP         ");
+      PENDOWNstate = false;
+
+      digitalWrite(Z_ENABLE_PIN, HIGH);
+    }
+
+    inline void home_Y()
+    {
+      YDIRvalue = false;
+
+      digitalWrite(Y_DIR_PIN, YDIRvalue);
+      digitalWrite(Y_ENABLE_PIN, LOW);
+      Serial.println("Home Y");
+      lcd.setCursor(0, 2);
+      lcd.print("Y HOME");
+      while (digitalRead(Y_MIN_PIN) == LOW)
+      {
+
+        digitalWrite(Y_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED);
+        digitalWrite(Y_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED);
+      }
+      Ypos_as_steps = YMAX * STEPSPERUNIT_Y;
+
+      YDIRvalue = true;
+      digitalWrite(Y_DIR_PIN, YDIRvalue);
+      for (int i = 0; i < 2000; i++)
+      {
+        digitalWrite(Y_STEP_PIN, HIGH);
+        delayMicroseconds(100);
+        digitalWrite(Y_STEP_PIN, LOW);
+        delayMicroseconds(100);
+        Ypos_as_steps = Ypos_as_steps - 1;
+      }
+      lcd.setCursor(0, 2);
+      lcd.print("Y HOMED  ");
+      digitalWrite(Y_ENABLE_PIN, HIGH);
+    }
+
+    inline void home_Z()
+    {
+
       digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
       digitalWrite(Z_ENABLE_PIN, LOW);
+      Serial.println("Z");
+      lcd.setCursor(0, 3);
+      lcd.print("Z HOME  LC: ");
+      lcd.setCursor(12, 3);
+      lcd.print(abs(scale.get_units(1)), 2);
 
-      for (int i = 0; i < STEPS_TO_RAISE_PEN; i++)
+      while (abs(scale.get_units(1)) < LOADCELL_TRESHOLD)
+      {
+        lcd.setCursor(12, 3);
+        lcd.print(abs(scale.get_units(1)), 2);
+        // homing z is slow because reading the loqd cell each step takes time
+        for (int i = 0; i < 10; i++)
+        {
+          digitalWrite(Z_STEP_PIN, HIGH);
+          delayMicroseconds(HOMINGSPEED_Z);
+          digitalWrite(Z_STEP_PIN, LOW);
+          delayMicroseconds(HOMINGSPEED_Z);
+        }
+      }
+      auto f = scale.get_units(1);
+      Serial.print(abs(f));
+      Serial.print(" : ");
+
+      ZDIRvalue = !ZDIRvalue;
+      digitalWrite(Z_DIR_PIN, ZDIRvalue);
+      while (abs(scale.get_units(1)) > 5)
+      {
+        lcd.setCursor(12, 3);
+        lcd.print(abs(scale.get_units(1)), 2);
+        z_total_steps += 30;
+        for (int i = 0; i < 30; i++)
+        {
+          digitalWrite(Z_STEP_PIN, HIGH);
+          delayMicroseconds(HOMINGSPEED_Z);
+          digitalWrite(Z_STEP_PIN, LOW);
+          delayMicroseconds(HOMINGSPEED_Z);
+        }
+      }
+
+      lcd.setCursor(12, 3);
+      lcd.print(abs(scale.get_units(1)), 2);
+      lcd.setCursor(0, 3);
+      lcd.print("Z HOMED");
+
+      while (abs(scale.get_units(1)) < LOADCELL_PEN_PRESSURE) // detecting distance to PEN DOWN position
+      {
+        lcd.setCursor(12, 3);
+        lcd.print(abs(scale.get_units(1)), 2);
+        z_total_steps += 5;
+        for (int i = 0; i < 5; i++)
+        {
+          digitalWrite(Z_STEP_PIN, HIGH);
+          delayMicroseconds(HOMINGSPEED_Z);
+          digitalWrite(Z_STEP_PIN, LOW);
+          delayMicroseconds(HOMINGSPEED_Z);
+        }
+      }
+      lcd.setCursor(0, 0);
+      lcd.print("Z steps:");
+      lcd.print(z_total_steps);
+
+      delay(3000);
+      ZDIRvalue = false;
+      /*
+      for (int i = 0; i < 70; i++)
       {
         digitalWrite(Z_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED);
+        digitalWrite(Z_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED);
+      }*/
+
+      PENDOWNstate = true;
+      digitalWrite(Z_ENABLE_PIN, HIGH);
+    }
+
+    inline void home_X()
+    {
+
+      XDIRvalue = false;
+      digitalWrite(X_DIR_PIN, XDIRvalue);
+      digitalWrite(X_ENABLE_PIN, LOW);
+      Serial.println("Home X");
+      lcd.clear();
+      lcd.setCursor(0, 1);
+      lcd.print("home X");
+      while (digitalRead(X_MIN_PIN) == LOW)
+      {
+        digitalWrite(X_STEP_PIN, HIGH);
+        delayMicroseconds(HOMINGSPEED);
+        digitalWrite(X_STEP_PIN, LOW);
+        delayMicroseconds(HOMINGSPEED);
+      }
+      XDIRvalue = true;
+      Xpos_as_steps = XMAX * STEPSPERUNIT_X;
+
+      digitalWrite(X_DIR_PIN, XDIRvalue);
+      for (int i = 0; i < 2000; i++)
+      {
+        digitalWrite(X_STEP_PIN, HIGH);
+        delayMicroseconds(150);
+        digitalWrite(X_STEP_PIN, LOW);
+        delayMicroseconds(150);
+
+        Xpos_as_steps = Xpos_as_steps - 1;
+      }
+      lcd.setCursor(0, 1);
+      lcd.print("X HOMED");
+      digitalWrite(X_ENABLE_PIN, HIGH);
+    }
+
+    inline void move_X(int dist, boolean dir)
+    {
+      digitalWrite(X_ENABLE_PIN, LOW);
+      digitalWrite(X_DIR_PIN, dir);
+
+      for (int i = 0; i < dist; i++)
+      {
+        digitalWrite(X_STEP_PIN, HIGH);
         delayMicroseconds(MOVINGSPEED);
-        digitalWrite(Z_STEP_PIN, LOW);
+        digitalWrite(X_STEP_PIN, LOW);
         delayMicroseconds(MOVINGSPEED);
+        if (dir == false)
+        {
+          Xpos_as_steps += 1;
+        }
+        if (dir == true)
+        {
+          Xpos_as_steps -= 1;
+        }
       }
+      digitalWrite(X_ENABLE_PIN, HIGH);
+
+    printCoordinates();
+    
     }
 
-    lcd.setCursor(0, 0);
-    lcd.print("PEN UP         ");
-    PENDOWNstate = false;
-
-    digitalWrite(Z_ENABLE_PIN, HIGH);
-  }
-
-  inline void home_Y()
-  {
-    YDIRvalue = false;
-
-    digitalWrite(Y_DIR_PIN, YDIRvalue);
-    digitalWrite(Y_ENABLE_PIN, LOW);
-    Serial.println("Home Y");
-    lcd.setCursor(0, 2);
-    lcd.print("Y HOME");
-    while (digitalRead(Y_MIN_PIN) == LOW)
+    inline void move_Y(int dist, boolean dir)
     {
+      digitalWrite(Y_ENABLE_PIN, LOW);
+      digitalWrite(Y_DIR_PIN, dir);
 
-      digitalWrite(Y_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Y_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-    Ypos_as_steps = YMAX * STEPSPERUNIT_Y;
-
-    YDIRvalue = true;
-    digitalWrite(Y_DIR_PIN, YDIRvalue);
-    for (int i = 0; i < 2000; i++)
-    {
-      digitalWrite(Y_STEP_PIN, HIGH);
-      delayMicroseconds(100);
-      digitalWrite(Y_STEP_PIN, LOW);
-      delayMicroseconds(100);
-      Ypos_as_steps = Ypos_as_steps - 1;
-    }
-    lcd.setCursor(0, 2);
-    lcd.print("Y HOMED  ");
-    digitalWrite(Y_ENABLE_PIN, HIGH);
-  }
-
-  inline void home_Z()
-  {
-
-    digitalWrite(Z_DIR_PIN, ZDIRvalue); // high is counterclockwise
-    digitalWrite(Z_ENABLE_PIN, LOW);
-    Serial.println("Z");
-    lcd.setCursor(0, 3);
-    lcd.print("Z HOME  LC: ");
-    lcd.setCursor(12, 3);
-    lcd.print(abs(scale.get_units(1)), 2);
-
-    while (abs(scale.get_units(1)) < LOADCELL_TRESHOLD)
-    {
-      lcd.setCursor(12, 3);
-      lcd.print(abs(scale.get_units(1)), 2);
-      // homing z is slow because reading the loqd cell each step takes time
-      for (int i = 0; i < 10; i++)
+      for (int i = 0; i < dist; i++)
       {
-        digitalWrite(Z_STEP_PIN, HIGH);
-        delayMicroseconds(HOMINGSPEED_Z);
-        digitalWrite(Z_STEP_PIN, LOW);
-        delayMicroseconds(HOMINGSPEED_Z);
+        digitalWrite(Y_STEP_PIN, HIGH);
+        delayMicroseconds(MOVINGSPEED);
+        digitalWrite(Y_STEP_PIN, LOW);
+        delayMicroseconds(MOVINGSPEED);
+        if (dir == false)
+        {
+          Ypos_as_steps += 1;
+        }
+        if (dir == true)
+        {
+          Ypos_as_steps -= 1;
+        }
       }
-    }
-    auto f = scale.get_units(1);
-    Serial.print(abs(f));
-    Serial.print(" : ");
+      digitalWrite(Y_ENABLE_PIN, HIGH); // high is off
 
-    ZDIRvalue = !ZDIRvalue;
-    digitalWrite(Z_DIR_PIN, ZDIRvalue);
-    while (abs(scale.get_units(1)) > 5)
+      printCoordinates();
+    }
+
+    inline void drawStraightLine(int x1, int y1, int x2, int y2)
     {
-      lcd.setCursor(12, 3);
-      lcd.print(abs(scale.get_units(1)), 2);
-      z_total_steps += 30;
-      for (int i = 0; i < 30; i++)
+      pen_Up();
+      moveToPoint(x1, y1);
+      pen_Down();
+      moveToPoint(x2, y2);
+      pen_Up();
+    }
+    inline void moveToPoint(int x1, int y1)
+    {
+      int dist_X = x1 * STEPSPERUNIT_X - Xpos_as_steps;
+
+      if (dist_X > 0)
       {
-        digitalWrite(Z_STEP_PIN, HIGH);
-        delayMicroseconds(HOMINGSPEED_Z);
-        digitalWrite(Z_STEP_PIN, LOW);
-        delayMicroseconds(HOMINGSPEED_Z);
+        move_X(dist_X, false);
       }
-    }
-
-    lcd.setCursor(12, 3);
-    lcd.print(abs(scale.get_units(1)), 2);
-    lcd.setCursor(0, 3);
-    lcd.print("Z HOMED");
-
-    while (abs(scale.get_units(1)) < LOADCELL_PEN_PRESSURE) // detecting distance to PEN DOWN position
-    {
-      lcd.setCursor(12, 3);
-      lcd.print(abs(scale.get_units(1)), 2);
-      z_total_steps += 5;
-      for (int i = 0; i < 5; i++)
+      if (dist_X < 0)
       {
-        digitalWrite(Z_STEP_PIN, HIGH);
-        delayMicroseconds(HOMINGSPEED_Z);
-        digitalWrite(Z_STEP_PIN, LOW);
-        delayMicroseconds(HOMINGSPEED_Z);
+        move_X(dist_X, true);
       }
-    }
-    lcd.setCursor(0, 0);
-    lcd.print("Z steps:");
-    lcd.print(z_total_steps);
 
-    delay(3000);
-    ZDIRvalue = false;
-    /*
-    for (int i = 0; i < 70; i++)
-    {
-      digitalWrite(Z_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(Z_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }*/
+      int dist_Y = y1 * STEPSPERUNIT_Y - Ypos_as_steps;
 
-    PENDOWNstate = true;
-    digitalWrite(Z_ENABLE_PIN, HIGH);
-  }
-
-  inline void home_X()
-  {
-
-    XDIRvalue = false;
-    digitalWrite(X_DIR_PIN, XDIRvalue);
-    digitalWrite(X_ENABLE_PIN, LOW);
-    Serial.println("Home X");
-    lcd.clear();
-    lcd.setCursor(0, 1);
-    lcd.print("home X");
-    while (digitalRead(X_MIN_PIN) == LOW)
-    {
-      digitalWrite(X_STEP_PIN, HIGH);
-      delayMicroseconds(HOMINGSPEED);
-      digitalWrite(X_STEP_PIN, LOW);
-      delayMicroseconds(HOMINGSPEED);
-    }
-    XDIRvalue = true;
-    Xpos_as_steps = XMAX * STEPSPERUNIT_X;
-
-    digitalWrite(X_DIR_PIN, XDIRvalue);
-    for (int i = 0; i < 2000; i++)
-    {
-      digitalWrite(X_STEP_PIN, HIGH);
-      delayMicroseconds(150);
-      digitalWrite(X_STEP_PIN, LOW);
-      delayMicroseconds(150);
-
-      Xpos_as_steps = Xpos_as_steps - 1;
-    }
-    lcd.setCursor(0, 1);
-    lcd.print("X HOMED");
-    digitalWrite(X_ENABLE_PIN, HIGH);
-  }
-
-  inline void move_X(int dist, boolean dir)
-  {
-    digitalWrite(X_ENABLE_PIN, LOW);
-    digitalWrite(X_DIR_PIN, dir);
-
-    for (int i = 0; i < dist; i++)
-    {
-      digitalWrite(X_STEP_PIN, HIGH);
-      delayMicroseconds(MOVINGSPEED);
-      digitalWrite(X_STEP_PIN, LOW);
-      delayMicroseconds(MOVINGSPEED);
-      if (dir == false)
+      if (dist_Y > 0)
       {
-        Xpos_as_steps += 1;
+        move_Y(dist_Y, false);
       }
-      if (dir == true)
+      if (dist_Y < 0)
       {
-        Xpos_as_steps -= 1;
+        move_Y(dist_Y, true);
       }
+      
     }
-    digitalWrite(X_ENABLE_PIN, HIGH);
-  }
 
-  inline void move_Y(int dist, boolean dir)
-  {
-    digitalWrite(Y_ENABLE_PIN, LOW);
-    digitalWrite(Y_DIR_PIN, dir);
-
-    for (int i = 0; i < dist; i++)
+    inline void run_X()
     {
-      digitalWrite(Y_STEP_PIN, HIGH);
-      delayMicroseconds(MOVINGSPEED);
-      digitalWrite(Y_STEP_PIN, LOW);
-      delayMicroseconds(MOVINGSPEED);
-      if (dir == false)
+
+      digitalWrite(X_DIR_PIN, HIGH);
+      digitalWrite(X_ENABLE_PIN, LOW);
+      Serial.println("run X     ");
+      lcd.setCursor(0, 3);
+      lcd.print("run X");
+      for (int i = 0; i < 5000; i++)
       {
-        Ypos_as_steps += 1;
+        digitalWrite(X_STEP_PIN, HIGH);
+        delayMicroseconds(300);
+        digitalWrite(X_STEP_PIN, LOW);
+        delayMicroseconds(300);
       }
-      if (dir == true)
-      {
-        Ypos_as_steps -= 1;
-      }
+      digitalWrite(X_ENABLE_PIN, HIGH);
     }
-    digitalWrite(Y_ENABLE_PIN, HIGH); // high is off
-  }
-
-  inline void run_X()
-  {
-
-    digitalWrite(X_DIR_PIN, HIGH);
-    digitalWrite(X_ENABLE_PIN, LOW);
-    Serial.println("run X     ");
-    lcd.setCursor(0, 3);
-    lcd.print("run X");
-    for (int i = 0; i < 5000; i++)
+    inline void printCoordinates()
     {
-      digitalWrite(X_STEP_PIN, HIGH);
-      delayMicroseconds(300);
-      digitalWrite(X_STEP_PIN, LOW);
-      delayMicroseconds(300);
+      lcd.setCursor(10, 0);
+      lcd.print("X");
+      lcd.print(Xpos_as_steps / STEPSPERUNIT_X, 1);
+      lcd.setCursor(10, 1);
+      lcd.print("Y");
+      lcd.print(Ypos_as_steps / STEPSPERUNIT_Y, 1);
     }
-    digitalWrite(X_ENABLE_PIN, HIGH);
-  }
-};
+  };
