@@ -6,7 +6,11 @@
 
 bool Xlimit = false;
 bool Ylimit = false;
+
+bool XDIRvalue = false; // low is to the right
+bool YDIRvalue = false; // low is to the back
 bool ZDIRvalue = false;
+
 bool PENDOWNstate = false;
 
 int xpos = 0;
@@ -209,8 +213,9 @@ struct MotorMover
 
   inline void home_Y()
   {
+    YDIRvalue = false;
 
-    digitalWrite(Y_DIR_PIN, LOW);
+    digitalWrite(Y_DIR_PIN, YDIRvalue);
     digitalWrite(Y_ENABLE_PIN, LOW);
     Serial.println("Home Y");
     lcd.setCursor(0, 2);
@@ -225,7 +230,8 @@ struct MotorMover
     }
     Ypos_as_steps = YMAX * STEPSPERUNIT_Y;
 
-    digitalWrite(Y_DIR_PIN, HIGH);
+    YDIRvalue = true;
+    digitalWrite(Y_DIR_PIN, YDIRvalue);
     for (int i = 0; i < 2000; i++)
     {
       digitalWrite(Y_STEP_PIN, HIGH);
@@ -323,7 +329,8 @@ struct MotorMover
   inline void home_X()
   {
 
-    digitalWrite(X_DIR_PIN, LOW);
+    XDIRvalue = false;
+    digitalWrite(X_DIR_PIN, XDIRvalue);
     digitalWrite(X_ENABLE_PIN, LOW);
     Serial.println("Home X");
     lcd.clear();
@@ -336,10 +343,10 @@ struct MotorMover
       digitalWrite(X_STEP_PIN, LOW);
       delayMicroseconds(HOMINGSPEED);
     }
-
+    XDIRvalue = true;
     Xpos_as_steps = XMAX * STEPSPERUNIT_X;
 
-    digitalWrite(X_DIR_PIN, HIGH);
+    digitalWrite(X_DIR_PIN, XDIRvalue);
     for (int i = 0; i < 2000; i++)
     {
       digitalWrite(X_STEP_PIN, HIGH);
@@ -352,6 +359,52 @@ struct MotorMover
     lcd.setCursor(0, 1);
     lcd.print("X HOMED");
     digitalWrite(X_ENABLE_PIN, HIGH);
+  }
+
+  inline void move_X(int dist, boolean dir)
+  {
+    digitalWrite(X_ENABLE_PIN, LOW);
+    digitalWrite(X_DIR_PIN, dir);
+
+    for (int i = 0; i < dist; i++)
+    {
+      digitalWrite(X_STEP_PIN, HIGH);
+      delayMicroseconds(MOVINGSPEED);
+      digitalWrite(X_STEP_PIN, LOW);
+      delayMicroseconds(MOVINGSPEED);
+      if (dir == false)
+      {
+        Xpos_as_steps += 1;
+      }
+      if (dir == true)
+      {
+        Xpos_as_steps -= 1;
+      }
+    }
+    digitalWrite(X_ENABLE_PIN, HIGH);
+  }
+
+  inline void move_Y(int dist, boolean dir)
+  {
+    digitalWrite(Y_ENABLE_PIN, LOW);
+    digitalWrite(Y_DIR_PIN, dir);
+
+    for (int i = 0; i < dist; i++)
+    {
+      digitalWrite(Y_STEP_PIN, HIGH);
+      delayMicroseconds(MOVINGSPEED);
+      digitalWrite(Y_STEP_PIN, LOW);
+      delayMicroseconds(MOVINGSPEED);
+      if (dir == false)
+      {
+        Ypos_as_steps += 1;
+      }
+      if (dir == true)
+      {
+        Ypos_as_steps -= 1;
+      }
+    }
+    digitalWrite(Y_ENABLE_PIN, HIGH); // high is off
   }
 
   inline void run_X()
